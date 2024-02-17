@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="language" content="bahasa">
+	<meta http-equiv="Content-Type" content="text/html">
+	<meta http-equiv="Content-Style-Type" content="text/css">
+    <meta http-equiv="Content-Script-Type" content="text/javascript">
+	<meta name="description" content="Karena memilih lewat Pemilu, bukan seperti melempar dadu. Kita semua yang akan menentukan, nasib Indonesia di masa depan."/>
+	<meta name="keywords" content="Pantau KPU, Pemilu, Pemilihan Umum, Komisi Pemilihan Umum, Kawal KPU, Indonesia, Pemilihan Presiden, Pilpres, Kampanye">
+    <meta name="robots" content="index,follow">
+    <meta name="distribution" content="web">
+	<meta name="rating" content="general">
+	<meta name="msapplication-TileImage" content="favicon.png">
+    <!-- CSS -->
+	<link rel="icon" type="image/png" href="favicon.png">
+	<link rel="shortcut icon" type="image/png" href="favicon.png"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css" crossorigin="anonymous"/>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/fontawesome.min.css" integrity="sha512-d0olNN35C6VLiulAobxYHZiXJmq+vl+BGIgAxQtD5+kqudro/xNMvv2yIHAciGHpExsIbKX3iLg+0B6d0k4+ZA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/solid.min.css" integrity="sha512-pZlKGs7nEqF4zoG0egeK167l6yovsuL8ap30d07kA5AJUq+WysFlQ02DLXAmN3n0+H3JVz5ni8SJZnrOaYXWBA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+	<!-- JS -->
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/fontawesome.min.js" integrity="sha512-C8qHv0HOaf4yoA7ISuuCTrsPX8qjolYTZyoFRKNA9dFKnxgzIHnYTOJhXQIt6zwpIFzCrRzUBuVgtC4e5K1nhA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/solid.min.js" integrity="sha512-+fI924YJzeYFv7M0R29zJvRThPinSUOAmo5rpR9v6G4eWIbva/prHdZGSPN440vuf781/sOd/Fr+5ey0pqdW9w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js" crossorigin="anonymous"></script>
+	<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/shim.min.js" crossorigin="anonymous"></script>
+	<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js" crossorigin="anonymous"></script>
+	<title>Pantau KPU</title>
+	<style>
+	body{
+		font-size: 10pt;
+	}
+    .bd-placeholder-img {
+        font-size: 1.125rem;
+        text-anchor: middle;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        user-select: none;
+    }
+
+    @media (min-width: 768px) {
+        .bd-placeholder-img-lg {
+          font-size: 3.5rem;
+        }
+    }
+    </style>
+  </head>
+  <body>
+	<div class="col-lg-8 mx-auto p-3 py-md-3">
+		<header class="d-flex align-items-center pb-3 mb-5 border-bottom">
+			<nav class="navbar navbar-light bg-light">
+				<a class="navbar-brand" href="#">
+					<h1><i class="fa-regular fa-shield-cat"></i> <small>Pantau KPU</small></h1>
+				</a>
+			</nav>
+		</header>
+		<main>
+			<div class="container">
+				<div class="row">
+					<div class="col">
+					
+						<figure class="text-center">
+						  <blockquote class="blockquote">
+							<p><em>"Karena memilih lewat Pemilu, bukan seperti melempar dadu. Kita semua yang akan menentukan, nasib Indonesia di masa depan."</em></p>
+						  </blockquote>
+						  <figcaption class="blockquote-footer">
+							<cite title="Source Title">Najwa Shihab</cite>
+						  </figcaption>
+						</figure>
+						
+						<button type="button" class="btn btn-success btn-lg" id="start"><i class="fa-solid fa-play"></i> Start</button>
+						<button type="button" class="btn btn-danger btn-lg" id="stop" disabled="disabled"><i class="fa-solid fa-stop"></i> Stop</button>
+							
+						<hr class="col-12">
+						
+						<div id="log">
+							<div class="row g-0">
+								<div class="col-md-11">
+									<div class="progress">
+										<div class="progress-bar progress-bar-striped progress-bar-animated" id="bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%">0</div>
+									</div>
+								</div>
+								<div class="col-md-1 text-center">
+									<p><mark id="percent"></mark></p>
+								</div>
+								<div class="col-md-8">
+									<p id="path"></p>
+								</div>
+							</div>
+						</div>
+						
+						<div id="content" class="border border-2 rounded-1 border-light"></div>
+					</div>
+				</div>
+			</div>
+		</main>
+		<footer class="pt-5 my-5 text-muted border-top">
+			Pantau KPU &copy; 2024
+		</footer>
+	</div>
+	<script>
+		
+		const ctrlCollect = new AbortController();
+	
+		const collect = (url, optional = {}) => {
+			const signal = ctrlCollect.signal;
+			return new Promise((resolve, reject) => {
+				fetch(url, { method: 'GET', headers: { 'Accept' : 'application/json' }, signal: signal,...optional })
+				.then(async (response) =>  await response.json())
+				.then((json) => resolve(json))
+				.catch((error) => reject(error))
+			});
+		}
+
+		const asyncForEach = async (array, callback) => {
+			for (let index = 0; index < array.length; index++) {
+			  await callback(array[index], index, array);
+			}
+		}
+
+		document.addEventListener("DOMContentLoaded", async () => {
+		
+			const bar = document.querySelector('#bar');
+			const percent = document.querySelector('#percent');
+			const path = document.querySelector('#path');
+			const content = document.querySelector('#content');
+			Fancybox.bind('[data-fancybox="gallery"]');
+			
+			const anomali = [];
+		
+			document.querySelector('#start').addEventListener("click", async () => {
+		
+				try{
+					
+					const result = await Swal.fire({
+											title: 'Anda yakin?',
+											html: 'Proses pemantauan akan membutuhkan waktu yang cukup lama, <strong>Jangan menutup atau mematikan Browser maupun Perangkat Komputer</strong> selama proses pemantauan berlangsung.',
+											icon: 'info',
+											showCancelButton: true,
+											confirmButtonText: `<i class="fa-solid fa-play"></i> Pantau`,
+											cancelButtonText: `<i class="fa-solid fa-xmark"></i> Batal`,
+										});
+										
+					if(!result.isConfirmed) {
+						return false;
+					}
+					
+					document.querySelector('#start').setAttribute('disabled', 'disabled');
+					document.querySelector('#stop').removeAttribute('disabled');
+				
+					var progress = 0;
+
+					const tingkat1 = await collect('https://sirekap-obj-data.kpu.go.id/wilayah/pemilu/ppwp/0.json', { cache: 'force-cache' });
+					const tb1 = 100/tingkat1.length;
+					
+					await asyncForEach(tingkat1, async (vt1, it1) => {
+					
+						const tingkat2 = await collect('https://sirekap-obj-data.kpu.go.id/wilayah/pemilu/ppwp/' + vt1.kode + '.json', { cache: 'force-cache' });
+						const tb2 = tb1/tingkat2.length;
+					
+						await asyncForEach(tingkat2, async (vt2, it2) => {
+						
+							const tingkat3 = await collect('https://sirekap-obj-data.kpu.go.id/wilayah/pemilu/ppwp/' + vt1.kode + '/' + vt2.kode + '.json', { cache: 'force-cache' });
+							const tb3 = tb2/tingkat3.length;
+						
+							await asyncForEach(tingkat3, async (vt3, it3) => {
+							
+								const tingkat4 = await collect('https://sirekap-obj-data.kpu.go.id/wilayah/pemilu/ppwp/' + vt1.kode + '/' + vt2.kode + '/' + vt3.kode + '.json', { cache: 'force-cache' });
+								const tb4 = tb3/tingkat4.length;
+						
+								await asyncForEach(tingkat4, async (vt4, it4) => {
+								
+									const tingkat5 = await collect('https://sirekap-obj-data.kpu.go.id/wilayah/pemilu/ppwp/' + vt1.kode + '/' + vt2.kode + '/' + vt3.kode + '/' + vt4.kode + '.json', { cache: 'force-cache' });
+									const tb5 = tb4/tingkat5.length;
+						
+									await asyncForEach(tingkat5, async (vt5, it5) => {
+									
+										const tps = vt1.nama +  ' -> ' + vt2.nama +  ' -> ' + vt3.nama +  ' -> ' + vt4.nama +  ' -> ' + vt5.nama;
+										
+										progress = progress + tb5;
+										
+										bar.style.width = parseFloat(progress).toFixed(4) + "%";
+										percent.innerText = parseFloat(progress).toFixed(2) + "%";										
+										path.innerText = tps;
+																			
+										const data = await collect('https://sirekap-obj-data.kpu.go.id/pemilu/hhcw/ppwp/' + vt1.kode + '/' + vt2.kode + '/' + vt3.kode + '/' + vt4.kode + '/' + vt5.kode + '.json', { cache: 'no-cache' });
+										
+										if(data.status_suara && data.status_adm) {
+											
+											const perolehan = data.chart['100025'] + data.chart['100026'] + data.chart['100027'];
+											const sah = data.administrasi.suara_sah;
+											const tidaksah = data.administrasi.suara_tidak_sah;
+											const total = data.administrasi.suara_total;
+											const dpt = data.administrasi.pengguna_total_j;
+											
+											let images ='';
+												if(data.images.length > 0) {
+													await asyncForEach(data.images,  async (vimg, iimg) => {
+														images = images + '<a data-fancybox="gallery" class="col" style="cursor:pointer;" data-src="' + vimg + '" data-caption="' + tps + '"><img class="img-fluid" src="' + vimg + '" alt="' + tps + '"></a>'
+													});
+												}
+												
+											const card = `<div class="card text-dark bg-light mb-3">
+															<div class="card-header alert-danger"><h5 class="card-title fw-bold">#${vt5.nama}</h5></div>
+															<div class="card-body">
+																<div class="row g-0">
+																	<div class="col-md-8">
+																		<ul class="list-group list-group-flush">
+																			<li class="list-group-item lh-sm">Lokasi TPS : ${tps}</li>	
+																			<li class="list-group-item lh-sm fw-bold">Jumlah Suara : ${total}</li>																				
+																			<li class="list-group-item lh-sm" style="list-style-type: disc;display: list-item;margin-left: 2.5em;padding-left: 0em;">Suara Sah : ${sah}</li>
+																			<li class="list-group-item lh-sm" style="list-style-type: disc;display: list-item;margin-left: 2.5em;padding-left: 0em;">Suara Tidak Sah : ${tidaksah}</li>
+																			<li class="list-group-item lh-sm fw-bold">Jumlah Perolehan Suara : ${perolehan}</li>
+																			<li class="list-group-item lh-sm" style="list-style-type: disc;display: list-item;margin-left: 2.5em;padding-left: 0em;">Perolehan Suara Pasangan 01 : ${data.chart['100025']}</li>
+																			<li class="list-group-item lh-sm" style="list-style-type: disc;display: list-item;margin-left: 2.5em;padding-left: 0em;">Perolehan Suara Pasangan 02 : ${data.chart['100026']}</li>
+																			<li class="list-group-item lh-sm" style="list-style-type: disc;display: list-item;margin-left: 2.5em;padding-left: 0em;">Perolehan Suara Pasangan 03 : ${data.chart['100027']}</li>																				
+																			<li class="list-group-item lh-sm fw-bold">Jumlah Pengguna Hak Pilih : ${dpt}</li>	
+																			<li class="list-group-item lh-sm fw-bold">Anomali : <mark>{{keterangan}}</mark></li>	
+																			<li class="list-group-item lh-sm"><a target="_blank" href="https://pemilu2024.kpu.go.id/pilpres/hitung-suara/${vt1.kode}/${vt2.kode}/${vt3.kode}/${vt4.kode}/${vt5.kode}" class="btn alert-info">Buka di Website KPU</a></li>
+																		</ul>
+																	</div>
+																	<div class="col-md-4">
+																		<div class="container">
+																		  <div class="row">${images}</div>
+																		</div>
+																	</div>
+																</div>
+															</div>
+														</div>`;
+
+											const dtlanomali = {
+													provinsi: vt1.nama,
+													kotakab: vt2.nama,
+													kecamatan: vt3.nama,
+													kelurahan: vt4.nama,
+													tps: vt5.nama,
+													total: total,
+													sah: sah, 
+													tidak_sah: tidaksah,
+													total_perolehan: perolehan,
+													perolehan_01: data.chart['100025'],
+													perolehan_02: data.chart['100026'], 
+													perolehan_03: data.chart['100027'],
+													dpt: dpt,
+													link: `https://pemilu2024.kpu.go.id/pilpres/hitung-suara/${vt1.kode}/${vt2.kode}/${vt3.kode}/${vt4.kode}/${vt5.kode}`,
+													timestamp: new Date().toISOString()
+											};
+												
+											if(perolehan > sah) {											
+												const keterangan = 'Jumlah Perolehan Suara lebih banyak dari Jumlah Suara Sah';
+												dtlanomali.keterangan = keterangan;
+												content.insertAdjacentHTML('beforeend', card.replace('{{keterangan}}', keterangan));												
+												anomali.push(dtlanomali);
+											}else if(perolehan > dpt) {
+												const keterangan = 'Jumlah Perolehan Suara lebih banyak dari Jumlah Pengguna Hak Pilih';
+												dtlanomali.keterangan = keterangan;
+												content.insertAdjacentHTML('beforeend', card.replace('{{keterangan}}', keterangan));												
+												anomali.push(dtlanomali);
+											}else if(total > dpt) {
+												const keterangan = 'Jumlah Suara lebih banyak dari Jumlah Pengguna Hak Pilih';
+												dtlanomali.keterangan = keterangan;
+												content.insertAdjacentHTML('beforeend', card.replace('{{keterangan}}', keterangan));											
+												anomali.push(dtlanomali);
+											}											
+											
+										}
+									
+									});
+								
+								});
+							
+							});
+						
+						});
+					
+					});
+					
+					const worksheet = await XLSX.utils.json_to_sheet(anomali);
+					const workbook = await XLSX.utils.book_new();
+					await XLSX.utils.book_append_sheet(workbook, worksheet, "DATA TERPANTAU");
+					await XLSX.utils.sheet_add_aoa(worksheet, [['Provinsi', 'Kota/Kabupaten', 'Kecamatan', 'Kelurahan', 'TPS', 'Jumlah Suara', 'Suara Sah', 'Suara Tidak Sah', 'Jumlah Perolehan Suara', 'Perolehan Suara Pasangan 01', 'Perolehan Suara Pasangan 02', 'Perolehan Suara Pasangan 03', 'Jumlah Pengguna Hak Pilih', 'Link Website KPU', 'Tanggal-Waktu Terpantau', 'Anomali/Penyimpangan']], { origin: "A1" });
+					await XLSX.writeFile(workbook, 'Pantau_KPU_' + (new Date().toISOString().replace(/\:/g, '.')) + '.xlsx', { compression: true });
+						
+				}catch(error) {
+					console.error(error);
+				}
+			
+			});
+			
+			document.querySelector('#stop').addEventListener("click", async () => {
+				
+				const result = await Swal.fire({
+											title: 'Anda yakin?',
+											html: 'Jika proses pemantauan dihentikan maka tidak dapat dilanjutkan, dan harus dimulai dari awal kembali. ',
+											icon: 'warning',
+											showCancelButton: true,
+											confirmButtonText: `<i class="fa-solid fa-stop"></i> Stop`,
+											cancelButtonText: `<i class="fa-solid fa-xmark"></i> Batal`,
+										});
+										
+				if(!result.isConfirmed) {
+					return false;
+				}
+				
+				document.querySelector('#stop').setAttribute('disabled', 'disabled');
+				document.querySelector('#start').removeAttribute('disabled');
+					
+				ctrlCollect.abort();
+				const worksheet = await XLSX.utils.json_to_sheet(anomali);
+				const workbook = await XLSX.utils.book_new();
+				await XLSX.utils.book_append_sheet(workbook, worksheet, "DATA TERPANTAU");
+				await XLSX.utils.sheet_add_aoa(worksheet, [['Provinsi', 'Kota/Kabupaten', 'Kecamatan', 'Kelurahan', 'TPS', 'Jumlah Suara', 'Suara Sah', 'Suara Tidak Sah', 'Jumlah Perolehan Suara', 'Perolehan Suara Pasangan 01', 'Perolehan Suara Pasangan 02', 'Perolehan Suara Pasangan 03', 'Jumlah Pengguna Hak Pilih', 'Link Website KPU', 'Tanggal-Waktu Terpantau', 'Anomali/Penyimpangan']], { origin: "A1" });
+				await XLSX.writeFile(workbook, 'Pantau_KPU_' + (new Date().toISOString().replace(/\:/g, '.')) + '.xlsx', { compression: true });
+			});
+
+		});
+	</script>
+  </body>
+</html>
