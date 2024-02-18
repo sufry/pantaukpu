@@ -72,28 +72,62 @@
 						  </figcaption>
 						</figure>
 						
-						<button type="button" class="btn btn-success btn-lg" id="start"><i class="fa-solid fa-play"></i> Start</button>
-						<button type="button" class="btn btn-danger btn-lg" id="stop" disabled="disabled"><i class="fa-solid fa-stop"></i> Stop</button>
-							
-						<hr class="col-12">
+						<fieldset style="all: revert;" class="mb-4">
+							<legend style="all: revert;" class="ps-2 pe-2 text-secondary"><strong>Petunjuk Penggunaan</strong></legend>
+							<div class="border border-2 rounded-1 border-light col-12">
+								<ol class="list-group list-group-flush list-group-numbered">
+								  <li class="list-group-item">Pastikan kondisi Browser maupun Perangkat dan Koneksi Internet anda dalam keadaan yang baik dan stabil</li>
+								  <li class="list-group-item">Klik tombol <strong><i class="fa-solid fa-play"></i> Start</strong> untuk memulai pemantauan, dan Pilih Provinsi yang ingin dipantau (semakin banyak provinsi yang dipilih maka proses pemantauan akan membutuhkan waktu pemantauan semakin lama)</li>
+								  <li class="list-group-item">Proses pemantauan akan memantau seluruh data TPS di KPU berdasarkan provinsi yang dipilih secara satu-persatu dan secara langsung akan memberikan laporan Anomali yang ditemukan dalam bentuk ringkasan hasil pemantauan</li>
+								  <li class="list-group-item">Silahkan menunggu hingga proses pemantauan selesai atau dapat meng-klik tombol <strong><i class="fa-solid fa-stop"></i> Stop</strong> untuk menghentikan proses pemantauan</li>
+								  <li class="list-group-item">Jika proses pemantauan sudah selesai atau diberhentikan maka otomatis akan menghasilkan laporan detail hasil pemantauan dalam bentuk file Spreadsheet/Excel ( .XLSX ) dan tombol "Tampilkan Detail" dapat di klik untuk melihat secara langsung</li>
+								</ol>
+							</div>						
+						</fieldset>
 						
-						<div id="log">
-							<div class="row g-0">
-								<div class="col-md-11">
+						<button type="button" class="btn btn-success mb-2" id="start"><i class="fa-solid fa-play"></i> Start</button>
+						<button type="button" class="btn btn-danger mb-2" id="stop" disabled="disabled"><i class="fa-solid fa-stop"></i> Stop</button>
+						
+						<div id="progress" class="d-none">
+							<hr class="col-12">
+							<div class="row align-middle">
+								<div class="col-md-11 align-middle">
 									<div class="progress">
-										<div class="progress-bar progress-bar-striped progress-bar-animated" id="bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%">0</div>
+										<div class="progress-bar progress-bar-striped progress-bar-animated" id="bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%"></div>
 									</div>
 								</div>
-								<div class="col-md-1 text-center">
-									<p><mark id="percent"></mark></p>
+								<div class="col-md-1 text-center align-middle">
+									<p id="percent" class="font-monospace text-primary"></p>
 								</div>
-								<div class="col-md-8">
-									<p id="path"></p>
+								<div class="col-md-12 align-middle">
+									<p id="path" class="font-monospace text-secondary"></p>
 								</div>
 							</div>
+							<hr class="col-12">
 						</div>
 						
-						<div id="content" class="border border-2 rounded-1 border-light"></div>
+						<div id="log" class="d-none">
+							<div class="border border-2 rounded-1 border-light mb-4">								
+								<h5>Anomali Terpantau Saat ini</h5>
+								<ul class="list-group list-group-flush">									
+									<li class="list-group-item">Jumlah Perolehan Suara lebih dari 300 Suara <span id="anom1" class="badge bg-danger">0</span></li>
+									<li class="list-group-item">Jumlah Perolehan Suara lebih banyak dari Jumlah Suara Sah <span id="anom2" class="badge bg-danger text-right">0</span></li>
+									<li class="list-group-item">Jumlah Perolehan Suara lebih banyak dari Jumlah Pengguna Hak Pilih <span id="anom3" class="badge bg-danger">0</span></li>
+									<li class="list-group-item">Jumlah Suara lebih banyak dari Jumlah Pengguna Hak Pilih <span id="anom4" class="badge bg-warning">0</span></li>
+								</ul>
+							</div>
+							<div class="d-grid col-12">
+								<div class="d-grid gap-2 col-4 mx-auto">
+									<button class="btn btn-info d-block" type="button" id="detail" disabled="disabled">Tampilkan Detail</button>
+								</div>
+								<div class="d-grid gap-2 col-12 mx-auto">
+									<div id="cards"></div>
+								</div>
+								<div class="d-grid gap-2 col-4 mx-auto">
+									<button class="btn btn-outline-info d-none" type="button" id="more">Tampilkan Lebih Banyak</button>
+								</div>
+							</div>
+						</diV>
 					</div>
 				</div>
 			</div>
@@ -103,16 +137,32 @@
 		</footer>
 	</div>
 	<script>
+		'use strict';
 		
-		const ctrlCollect = new AbortController();
+		var ctrlCollect = null;
 	
-		const collect = (url, optional = {}) => {
+		const collect = (url, optional = {}, retries = 3) => {
+			if(ctrlCollect === null) ctrlCollect = new AbortController();
 			const signal = ctrlCollect.signal;
 			return new Promise((resolve, reject) => {
-				fetch(url, { method: 'GET', headers: { 'Accept' : 'application/json' }, signal: signal,...optional })
+				const counter = retries - 1;
+				if(counter === 0) reject('Too many retry attempts');
+				fetch(url, { method: 'GET', headers: { 'Accept' : 'application/json' }, priority: 'auto', referrerPolicy: 'no-referrer', keepalive: true, signal: signal, ...optional })
 				.then(async (response) =>  await response.json())
 				.then((json) => resolve(json))
-				.catch((error) => reject(error))
+				.catch((error) => {
+					if (counter !== 0) {
+						setTimeout(async () => {
+							try{
+								await collect(url, optional, counter);
+							}catch(err){
+								reject(err);
+							}
+						}, 3000);
+					}else{
+						reject(error);
+					}
+				})
 			});
 		}
 
@@ -127,10 +177,47 @@
 			const bar = document.querySelector('#bar');
 			const percent = document.querySelector('#percent');
 			const path = document.querySelector('#path');
-			const content = document.querySelector('#content');
+			const cards = document.querySelector('#cards');
+			const anom1 = document.querySelector('#anom1');
+			const anom2 = document.querySelector('#anom2');
+			const anom3 = document.querySelector('#anom3');
+			const anom4 = document.querySelector('#anom4');
 			Fancybox.bind('[data-fancybox="gallery"]');
 			
 			const anomali = [];
+			
+			const limit = 5;
+			
+			var progress = 0;
+			var more = limit;
+			
+			const card = `<div class="card text-dark bg-light mb-4">
+							<div class="card-header {{color}}"><h5 class="card-title fw-bold">#{{tps}}</h5></div>
+							<div class="card-body">
+								<div class="row g-0">
+									<div class="col-md-8">
+										<ul class="list-group list-group-flush">
+											<li class="list-group-item lh-sm">Lokasi TPS : {{path}}</li>	
+											<li class="list-group-item lh-sm fw-bold">Jumlah Suara : {{total}}</li>																				
+											<li class="list-group-item lh-sm" style="list-style-type: disc;display: list-item;margin-left: 2.5em;padding-left: 0em;">Suara Sah : {{sah}}</li>
+											<li class="list-group-item lh-sm" style="list-style-type: disc;display: list-item;margin-left: 2.5em;padding-left: 0em;">Suara Tidak Sah : {{tidaksah}}</li>
+											<li class="list-group-item lh-sm fw-bold">Jumlah Perolehan Suara : {{perolehan}}</li>
+											<li class="list-group-item lh-sm" style="list-style-type: disc;display: list-item;margin-left: 2.5em;padding-left: 0em;">Perolehan Suara Pasangan 01 : {{p01}}</li>
+											<li class="list-group-item lh-sm" style="list-style-type: disc;display: list-item;margin-left: 2.5em;padding-left: 0em;">Perolehan Suara Pasangan 02 : {{p02}}</li>
+											<li class="list-group-item lh-sm" style="list-style-type: disc;display: list-item;margin-left: 2.5em;padding-left: 0em;">Perolehan Suara Pasangan 03 : {{p03}}</li>																				
+											<li class="list-group-item lh-sm fw-bold">Jumlah Pengguna Hak Pilih : {{dpt}}</li>	
+											<li class="list-group-item lh-sm fw-bold">Anomali : <mark>{{keterangan}}</mark></li>	
+											<li class="list-group-item lh-sm"><a target="_blank" href="{{link}}" class="btn alert-info">Buka di Website KPU</a></li>
+										</ul>
+									</div>
+									<div class="col-md-4">
+										<div class="container">
+										  <div class="row">{{images}}</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>`;
 		
 			document.querySelector('#start').addEventListener("click", async () => {
 		
@@ -138,7 +225,9 @@
 					
 					const result = await Swal.fire({
 											title: 'Anda yakin?',
-											html: 'Proses pemantauan akan membutuhkan waktu yang cukup lama, <strong>Jangan menutup atau mematikan Browser maupun Perangkat Komputer</strong> selama proses pemantauan berlangsung.',
+											width: '40%',
+											allowOutsideClick: false,
+											html: 'Selama proses pemantauan dimohon untuk <strong>Tidak menutup dan/atau mematikan Browser maupun Perangkat, dan pastikan Koneksi Internet anda dalam keadaan stabil</strong> saat proses pemantauan berlangsung.',
 											icon: 'info',
 											showCancelButton: true,
 											confirmButtonText: `<i class="fa-solid fa-play"></i> Pantau`,
@@ -149,15 +238,62 @@
 						return false;
 					}
 					
+					cards.innerHTML = '';
+					ctrlCollect = null;
+					progress = 0;
+					more = limit;
+					anom1.innerText = 0;
+					anom2.innerText = 0;
+					anom3.innerText = 0;
+					anom4.innerText = 0;
+					anomali.length = 0;
+					
+					document.querySelector('#detail').setAttribute('disabled', 'disabled');
+					
 					document.querySelector('#start').setAttribute('disabled', 'disabled');
 					document.querySelector('#stop').removeAttribute('disabled');
-				
-					var progress = 0;
+					
+					document.querySelector('#progress').setAttribute('class', 'd-block');
+					document.querySelector('#log').setAttribute('class', 'd-block');
 
 					const tingkat1 = await collect('https://sirekap-obj-data.kpu.go.id/wilayah/pemilu/ppwp/0.json', { cache: 'force-cache' });
-					const tb1 = 100/tingkat1.length;
 					
-					await asyncForEach(tingkat1, async (vt1, it1) => {
+					
+					const { value: checked } = await Swal.fire({
+														title: 'Pilih Provinsi Pemantauan',
+														width: '86%',
+														allowOutsideClick: false,
+														html: '<div class="container"><div class="row">' + tingkat1.map((row) => {
+															return `<div class="col-sm-3">
+																	  <div class="input-group-text bg-transparent border-0">
+																		<input class="form-check-input mt-0" name="provinsi[]" type="checkbox" checked="checked" value="${row.kode}" aria-label="${row.nama}"><label class="form-label mt-1 ms-2">${row.nama}</label>
+																	  </div>
+																	</div>`;
+														}).join('') + '<div class="col-sm-3"><button type="button" class="btn btn-outline-secondary btn-sm float-start" id="slall">Pilih Semua</button><button type="button" class="btn btn-outline-secondary btn-sm float-end" id="clall">Kosongkan Semua</button></div></div></div>',
+														focusConfirm: false,
+														didRender: () => {
+															document.querySelector('#slall').addEventListener("click", async () => {
+																[...document.querySelectorAll('input[name="provinsi[]"]')].map(row => row.setAttribute('checked', 'checked'));		
+															});
+															
+															document.querySelector('#clall').addEventListener("click", async () => {
+																[...document.querySelectorAll('input[name="provinsi[]"]')].map(row => row.removeAttribute('checked'));				
+															});
+														},
+														preConfirm: () => {
+															return [...document.querySelectorAll('input[name="provinsi[]"]:checked')].map(row => row.value);
+														},
+														confirmButtonText: `<i class="fa-solid fa-play"></i> Pantau`,
+													});
+					if (checked.length <= 0) {
+						return false;
+					}
+					
+					const filrdtingkat1 = tingkat1.filter((row) => { return checked.indexOf(row.kode) >= 0 })
+					
+					const tb1 = 100/filrdtingkat1.length;
+					
+					await asyncForEach(filrdtingkat1, async (vt1, it1) => {
 					
 						const tingkat2 = await collect('https://sirekap-obj-data.kpu.go.id/wilayah/pemilu/ppwp/' + vt1.kode + '.json', { cache: 'force-cache' });
 						const tb2 = tb1/tingkat2.length;
@@ -183,7 +319,7 @@
 										
 										progress = progress + tb5;
 										
-										bar.style.width = parseFloat(progress).toFixed(4) + "%";
+										bar.style.width = parseFloat(progress).toFixed(6) + "%";
 										percent.innerText = parseFloat(progress).toFixed(2) + "%";										
 										path.innerText = tps;
 																			
@@ -198,39 +334,11 @@
 											const dpt = data.administrasi.pengguna_total_j;
 											
 											let images ='';
-												if(data.images.length > 0) {
-													await asyncForEach(data.images,  async (vimg, iimg) => {
-														images = images + '<a data-fancybox="gallery" class="col" style="cursor:pointer;" data-src="' + vimg + '" data-caption="' + tps + '"><img class="img-fluid" src="' + vimg + '" alt="' + tps + '"></a>'
-													});
-												}
-												
-											const card = `<div class="card text-dark bg-light mb-3">
-															<div class="card-header alert-danger"><h5 class="card-title fw-bold">#${vt5.nama}</h5></div>
-															<div class="card-body">
-																<div class="row g-0">
-																	<div class="col-md-8">
-																		<ul class="list-group list-group-flush">
-																			<li class="list-group-item lh-sm">Lokasi TPS : ${tps}</li>	
-																			<li class="list-group-item lh-sm fw-bold">Jumlah Suara : ${total}</li>																				
-																			<li class="list-group-item lh-sm" style="list-style-type: disc;display: list-item;margin-left: 2.5em;padding-left: 0em;">Suara Sah : ${sah}</li>
-																			<li class="list-group-item lh-sm" style="list-style-type: disc;display: list-item;margin-left: 2.5em;padding-left: 0em;">Suara Tidak Sah : ${tidaksah}</li>
-																			<li class="list-group-item lh-sm fw-bold">Jumlah Perolehan Suara : ${perolehan}</li>
-																			<li class="list-group-item lh-sm" style="list-style-type: disc;display: list-item;margin-left: 2.5em;padding-left: 0em;">Perolehan Suara Pasangan 01 : ${data.chart['100025']}</li>
-																			<li class="list-group-item lh-sm" style="list-style-type: disc;display: list-item;margin-left: 2.5em;padding-left: 0em;">Perolehan Suara Pasangan 02 : ${data.chart['100026']}</li>
-																			<li class="list-group-item lh-sm" style="list-style-type: disc;display: list-item;margin-left: 2.5em;padding-left: 0em;">Perolehan Suara Pasangan 03 : ${data.chart['100027']}</li>																				
-																			<li class="list-group-item lh-sm fw-bold">Jumlah Pengguna Hak Pilih : ${dpt}</li>	
-																			<li class="list-group-item lh-sm fw-bold">Anomali : <mark>{{keterangan}}</mark></li>	
-																			<li class="list-group-item lh-sm"><a target="_blank" href="https://pemilu2024.kpu.go.id/pilpres/hitung-suara/${vt1.kode}/${vt2.kode}/${vt3.kode}/${vt4.kode}/${vt5.kode}" class="btn alert-info">Buka di Website KPU</a></li>
-																		</ul>
-																	</div>
-																	<div class="col-md-4">
-																		<div class="container">
-																		  <div class="row">${images}</div>
-																		</div>
-																	</div>
-																</div>
-															</div>
-														</div>`;
+											if(data.images.length > 0) {
+												await asyncForEach(data.images,  async (vimg, iimg) => {
+													images = images + '<a data-fancybox="gallery" class="col" style="cursor:pointer;" data-src="' + vimg + '" data-caption="' + tps + '"><img class="img-fluid" src="' + vimg + '" alt="' + tps + '"></a>'
+												});
+											}
 
 											const dtlanomali = {
 													provinsi: vt1.nama,
@@ -247,24 +355,35 @@
 													perolehan_03: data.chart['100027'],
 													dpt: dpt,
 													link: `https://pemilu2024.kpu.go.id/pilpres/hitung-suara/${vt1.kode}/${vt2.kode}/${vt3.kode}/${vt4.kode}/${vt5.kode}`,
-													timestamp: new Date().toISOString()
+													timestamp: new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }),
+													images : images,
+													path : tps
 											};
 												
-											if(perolehan > sah) {											
+											if(perolehan > 300) {											
+												const keterangan = 'Jumlah Perolehan Suara lebih dari 300 Suara';
+												dtlanomali.keterangan = keterangan;
+												dtlanomali.color = 'alert-danger';											
+												anomali.push(dtlanomali);
+												anom1.innerText = parseInt(anom1.innerText) + 1;
+											}else if(perolehan > sah) {
 												const keterangan = 'Jumlah Perolehan Suara lebih banyak dari Jumlah Suara Sah';
 												dtlanomali.keterangan = keterangan;
-												content.insertAdjacentHTML('beforeend', card.replace('{{keterangan}}', keterangan));												
+												dtlanomali.color = 'alert-danger';											
 												anomali.push(dtlanomali);
+												anom2.innerText = parseInt(anom2.innerText) + 1;
 											}else if(perolehan > dpt) {
 												const keterangan = 'Jumlah Perolehan Suara lebih banyak dari Jumlah Pengguna Hak Pilih';
 												dtlanomali.keterangan = keterangan;
-												content.insertAdjacentHTML('beforeend', card.replace('{{keterangan}}', keterangan));												
+												dtlanomali.color = 'alert-danger';											
 												anomali.push(dtlanomali);
+												anom3.innerText = parseInt(anom3.innerText) + 1;
 											}else if(total > dpt) {
 												const keterangan = 'Jumlah Suara lebih banyak dari Jumlah Pengguna Hak Pilih';
 												dtlanomali.keterangan = keterangan;
-												content.insertAdjacentHTML('beforeend', card.replace('{{keterangan}}', keterangan));											
+												dtlanomali.color = 'alert-warning';											
 												anomali.push(dtlanomali);
+												anom4.innerText = parseInt(anom4.innerText) + 1;
 											}											
 											
 										}
@@ -279,42 +398,148 @@
 					
 					});
 					
-					const worksheet = await XLSX.utils.json_to_sheet(anomali);
+					bar.classList.remove('progress-bar-animated');
+					const worksheet = await XLSX.utils.json_to_sheet(anomali.map((row) => {
+						const data = { ...row };
+						delete data.path;
+						delete data.images;
+						delete data.color;
+						return data;
+					}));
 					const workbook = await XLSX.utils.book_new();
 					await XLSX.utils.book_append_sheet(workbook, worksheet, "DATA TERPANTAU");
 					await XLSX.utils.sheet_add_aoa(worksheet, [['Provinsi', 'Kota/Kabupaten', 'Kecamatan', 'Kelurahan', 'TPS', 'Jumlah Suara', 'Suara Sah', 'Suara Tidak Sah', 'Jumlah Perolehan Suara', 'Perolehan Suara Pasangan 01', 'Perolehan Suara Pasangan 02', 'Perolehan Suara Pasangan 03', 'Jumlah Pengguna Hak Pilih', 'Link Website KPU', 'Tanggal-Waktu Terpantau', 'Anomali/Penyimpangan']], { origin: "A1" });
-					await XLSX.writeFile(workbook, 'Pantau_KPU_' + (new Date().toISOString().replace(/\:/g, '.')) + '.xlsx', { compression: true });
+					await XLSX.writeFile(workbook, 'Pantau_KPU_' + (new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }).replace(/\:/g, '.').replace(/\//g, '-').replace(/\s/g, '')) + '.xlsx', { compression: true });
 						
 				}catch(error) {
-					console.error(error);
+					console.log(error);
 				}
 			
 			});
 			
 			document.querySelector('#stop').addEventListener("click", async () => {
+			
+				try {
 				
-				const result = await Swal.fire({
-											title: 'Anda yakin?',
-											html: 'Jika proses pemantauan dihentikan maka tidak dapat dilanjutkan, dan harus dimulai dari awal kembali. ',
-											icon: 'warning',
-											showCancelButton: true,
-											confirmButtonText: `<i class="fa-solid fa-stop"></i> Stop`,
-											cancelButtonText: `<i class="fa-solid fa-xmark"></i> Batal`,
-										});
-										
-				if(!result.isConfirmed) {
-					return false;
+					const result = await Swal.fire({
+												title: 'Anda yakin?',
+												width: '40%',
+												allowOutsideClick: false,
+												html: 'Jika proses pemantauan dihentikan maka tidak dapat dilanjutkan, dan harus dimulai dari awal kembali. ',
+												icon: 'warning',
+												showCancelButton: true,
+												confirmButtonText: `<i class="fa-solid fa-stop"></i> Stop`,
+												cancelButtonText: `<i class="fa-solid fa-xmark"></i> Batal`,
+											});
+											
+					if(!result.isConfirmed) {
+						return false;
+					}
+					
+					document.querySelector('#stop').setAttribute('disabled', 'disabled');
+					document.querySelector('#start').removeAttribute('disabled');
+					
+					document.querySelector('#detail').removeAttribute('disabled');
+					
+					ctrlCollect.abort();
+					bar.classList.remove('progress-bar-animated');
+					const worksheet = await XLSX.utils.json_to_sheet(anomali.map((row) => {
+						const data = { ...row };
+						delete data.path;
+						delete data.images;
+						delete data.color;
+						return data;
+					}));
+					const workbook = await XLSX.utils.book_new();
+					await XLSX.utils.book_append_sheet(workbook, worksheet, "DATA TERPANTAU");
+					await XLSX.utils.sheet_add_aoa(worksheet, [['Provinsi', 'Kota/Kabupaten', 'Kecamatan', 'Kelurahan', 'TPS', 'Jumlah Suara', 'Suara Sah', 'Suara Tidak Sah', 'Jumlah Perolehan Suara', 'Perolehan Suara Pasangan 01', 'Perolehan Suara Pasangan 02', 'Perolehan Suara Pasangan 03', 'Jumlah Pengguna Hak Pilih', 'Link Website KPU', 'Tanggal-Waktu Terpantau', 'Anomali/Penyimpangan']], { origin: "A1" });
+					await XLSX.writeFile(workbook, 'Pantau_KPU_' + (new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }).replace(/\:/g, '.').replace(/\//g, '-').replace(/\s/g, '')) + '.xlsx', { compression: true });
+					
+				}catch(error) {
+					console.log(error);
 				}
 				
-				document.querySelector('#stop').setAttribute('disabled', 'disabled');
-				document.querySelector('#start').removeAttribute('disabled');
+			});
+
+			document.querySelector('#detail').addEventListener("click", async () => {
+				
+				try{
+			
+					document.querySelector('#detail').classList.remove('d-block');
+					document.querySelector('#detail').classList.add('class', 'd-none');
+					document.querySelector('#more').classList.remove('d-none');
+					document.querySelector('#more').classList.add('d-block');
 					
-				ctrlCollect.abort();
-				const worksheet = await XLSX.utils.json_to_sheet(anomali);
-				const workbook = await XLSX.utils.book_new();
-				await XLSX.utils.book_append_sheet(workbook, worksheet, "DATA TERPANTAU");
-				await XLSX.utils.sheet_add_aoa(worksheet, [['Provinsi', 'Kota/Kabupaten', 'Kecamatan', 'Kelurahan', 'TPS', 'Jumlah Suara', 'Suara Sah', 'Suara Tidak Sah', 'Jumlah Perolehan Suara', 'Perolehan Suara Pasangan 01', 'Perolehan Suara Pasangan 02', 'Perolehan Suara Pasangan 03', 'Jumlah Pengguna Hak Pilih', 'Link Website KPU', 'Tanggal-Waktu Terpantau', 'Anomali/Penyimpangan']], { origin: "A1" });
-				await XLSX.writeFile(workbook, 'Pantau_KPU_' + (new Date().toISOString().replace(/\:/g, '.')) + '.xlsx', { compression: true });
+					if(anomali.length < more){
+						more = anomali.length;
+					}
+				
+					await asyncForEach(anomali.slice(0, limit),  async (vdt, idt) => {					
+						cards.insertAdjacentHTML('beforeend', 
+							card.replace('{{color}}', vdt.color)
+								.replace('{{tps}}', vdt.tps)
+								.replace('{{path}}', vdt.path )
+								.replace('{{total}}', vdt.total)
+								.replace('{{sah}}', vdt.sah)
+								.replace('{{tidaksah}}', vdt.tidak_sah)
+								.replace('{{perolehan}}', vdt.total_perolehan)
+								.replace('{{p01}}', vdt.perolehan_01)
+								.replace('{{p02}}', vdt.perolehan_02)
+								.replace('{{p03}}', vdt.perolehan_03)
+								.replace('{{dpt}}', vdt.dpt)
+								.replace('{{keterangan}}', vdt.keterangan)
+								.replace('{{images}}', vdt.images)
+								.replace('{{link}}', vdt.link)
+						);
+					});
+					
+				}catch(error) {
+					console.log(error);
+				}
+			
+			});
+			
+			document.querySelector('#more').addEventListener("click", async () => {
+				
+				try{
+				
+					if(anomali.length <= more){
+						await Swal.fire({
+									title: 'Information',
+									width: '40%',
+									html: 'Detail sudah ditampilkan seluruhnya.',
+									icon: 'info',
+									confirmButtonText: `OK`,
+								});
+						return false;
+					}
+					
+					const offset = more + limit;
+				
+					await asyncForEach(anomali.slice(more, offset),  async (vdt, idt) => {					
+						cards.insertAdjacentHTML('beforeend', 
+							card.replace('{{color}}', vdt.color)
+								.replace('{{tps}}', vdt.tps)
+								.replace('{{path}}', vdt.path )
+								.replace('{{total}}', vdt.total)
+								.replace('{{sah}}', vdt.sah)
+								.replace('{{tidaksah}}', vdt.tidak_sah)
+								.replace('{{perolehan}}', vdt.total_perolehan)
+								.replace('{{p01}}', vdt.perolehan_01)
+								.replace('{{p02}}', vdt.perolehan_02)
+								.replace('{{p03}}', vdt.perolehan_03)
+								.replace('{{dpt}}', vdt.dpt)
+								.replace('{{keterangan}}', vdt.keterangan)
+								.replace('{{images}}', vdt.images)
+								.replace('{{link}}', vdt.link)
+						);
+						more = more + 1;				
+					});
+					
+				}catch(error) {
+					console.log(error);
+				}
+			
 			});
 
 		});
