@@ -47,12 +47,16 @@
           font-size: 3.5rem;
         }
     }
+	.form-check-input {
+		min-width:1.2em;
+		min-height:1.2em;
+	}
     </style>
   </head>
   <body>
 	<div class="col-lg-8 mx-auto p-3 py-md-3">
 		<header class="d-flex align-items-center pb-3 mb-5 border-bottom">
-			<nav class="navbar navbar-light bg-light">
+			<nav class="navbar navbar-light bg-white">
 				<a class="navbar-brand" href="#">
 					<h1><i class="fa-regular fa-shield-cat"></i> <small>Pantau KPU</small></h1>
 				</a>
@@ -141,7 +145,7 @@
 		
 		var ctrlCollect = null;
 	
-		const collect = (url, optional = {}, retries = 3) => {
+		const collect = (url, optional = {}, retries = 10) => {
 			if(ctrlCollect === null) ctrlCollect = new AbortController();
 			const signal = ctrlCollect.signal;
 			return new Promise((resolve, reject) => {
@@ -225,8 +229,11 @@
 					
 					const result = await Swal.fire({
 											title: 'Anda yakin?',
-											width: '40%',
+											width: '40em',
 											allowOutsideClick: false,
+											allowEscapeKey: false,
+											allowEnterKey: false,
+											focusConfirm: false,
 											html: 'Selama proses pemantauan dimohon untuk <strong>Tidak menutup dan/atau mematikan Browser maupun Perangkat, dan pastikan Koneksi Internet anda dalam keadaan stabil</strong> saat proses pemantauan berlangsung.',
 											icon: 'info',
 											showCancelButton: true,
@@ -261,16 +268,18 @@
 					
 					const { value: checked } = await Swal.fire({
 														title: 'Pilih Provinsi Pemantauan',
-														width: '86%',
+														width: '86em',
 														allowOutsideClick: false,
+														allowEscapeKey: false,
+														allowEnterKey: false,
+														focusConfirm: false,
 														html: '<div class="container"><div class="row">' + tingkat1.map((row) => {
-															return `<div class="col-sm-3">
+															return `<div class="col-md-3">
 																	  <div class="input-group-text bg-transparent border-0">
 																		<input class="form-check-input mt-0" name="provinsi[]" type="checkbox" checked="checked" value="${row.kode}" aria-label="${row.nama}"><label class="form-label mt-1 ms-2">${row.nama}</label>
 																	  </div>
 																	</div>`;
 														}).join('') + '<div class="col-sm-3"><button type="button" class="btn btn-outline-secondary btn-sm float-start" id="slall">Pilih Semua</button><button type="button" class="btn btn-outline-secondary btn-sm float-end" id="clall">Kosongkan Semua</button></div></div></div>',
-														focusConfirm: false,
 														didRender: () => {
 															document.querySelector('#slall').addEventListener("click", async () => {
 																[...document.querySelectorAll('input[name="provinsi[]"]')].map(row => row.setAttribute('checked', 'checked'));		
@@ -398,6 +407,9 @@
 					
 					});
 					
+					document.querySelector('#stop').setAttribute('disabled', 'disabled');
+					document.querySelector('#start').removeAttribute('disabled');
+					document.querySelector('#detail').removeAttribute('disabled');
 					bar.classList.remove('progress-bar-animated');
 					const worksheet = await XLSX.utils.json_to_sheet(anomali.map((row) => {
 						const data = { ...row };
@@ -423,8 +435,11 @@
 				
 					const result = await Swal.fire({
 												title: 'Anda yakin?',
-												width: '40%',
+												width: '40em',
 												allowOutsideClick: false,
+												allowEscapeKey: false,
+												allowEnterKey: false,
+												focusConfirm: false,
 												html: 'Jika proses pemantauan dihentikan maka tidak dapat dilanjutkan, dan harus dimulai dari awal kembali. ',
 												icon: 'warning',
 												showCancelButton: true,
@@ -506,7 +521,11 @@
 					if(anomali.length <= more){
 						await Swal.fire({
 									title: 'Information',
-									width: '40%',
+									width: '40em',
+									allowOutsideClick: false,
+									allowEscapeKey: false,
+									allowEnterKey: false,
+									focusConfirm: false,
 									html: 'Detail sudah ditampilkan seluruhnya.',
 									icon: 'info',
 									confirmButtonText: `OK`,
